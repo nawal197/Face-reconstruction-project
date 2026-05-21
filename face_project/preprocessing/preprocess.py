@@ -271,16 +271,19 @@ class PreprocessingPipeline:
         # Détecte la structure Kaggle
         is_kaggle, without_mask_dir, with_mask_dir = detect_kaggle_structure(input_dir)
         
-        if is_kaggle:
-            # Utilise les images de without_mask/ comme source principale
-            logger.info(f"📂 Processing images from: {without_mask_dir}")
-            images = list(without_mask_dir.glob("*.jpg")) + list(without_mask_dir.glob("*.png"))
-            images += list(without_mask_dir.glob("**/*.jpg")) + list(without_mask_dir.glob("**/*.png"))
-            images = list(set(images))  # Remove duplicates
-        else:
-            # Traite tous les fichiers image du dossier
-            images = list(input_path.glob("**/*.jpg")) + list(input_path.glob("**/*.png"))
+        # Collect all images recursively
+        image_extensions = ["*.jpg", "*.jpeg", "*.png"]
 
+        images = []
+
+        for ext in image_extensions:
+            images.extend(list(input_path.rglob(ext)))
+
+        # Remove duplicates
+        images = list(set(images))
+
+        logger.info(f"📂 Found {len(images)} images")
+        
         logger.info(f"🔄 Processing {len(images)} images...")
         for img_path in tqdm(images):
             self.process_image(img_path, output_path)
