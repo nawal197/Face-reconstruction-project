@@ -13,6 +13,12 @@ from tqdm import tqdm
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def get_dataset_path():
+    """Détecte si on est sur Kaggle et retourne le bon chemin"""
+    import os
+    if os.path.exists('/kaggle/input'):
+        return '/kaggle/input/prasoonkottarathil/face-mask-lite-dataset'
+    return 'datasets/raw'
 
 # ─────────────────────────────────────────────
 # Face Detection

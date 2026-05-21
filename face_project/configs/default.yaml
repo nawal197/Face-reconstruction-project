@@ -1,5 +1,6 @@
 data:
-  processed_dir: datasets/processed
+  raw_dir: datasets/raw                    # Local
+  processed_dir: datasets/processed        # Local
   scale_factor: 4
   mask_type: surgical
   image_size: 256
