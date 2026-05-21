@@ -1,5 +1,6 @@
 """
 Preprocessing Pipeline — Face Detection, Alignment, Mask Generation, Degradation
+Supports Kaggle dataset structure: /with_mask/ and /without_mask/
 """
 
 import cv2
@@ -9,16 +10,41 @@ from typing import Tuple, List, Optional
 import argparse
 import logging
 from tqdm import tqdm
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def get_dataset_path():
     """Détecte si on est sur Kaggle et retourne le bon chemin"""
-    import os
     if os.path.exists('/kaggle/input'):
-        return '/kaggle/input/prasoonkottarathil/face-mask-lite-dataset'
+        kaggle_path = Path('/kaggle/input/prasoonkottarathil/face-mask-lite-dataset')
+        if kaggle_path.exists():
+            logger.info(f"🎯 Kaggle dataset detected: {kaggle_path}")
+            return str(kaggle_path)
     return 'datasets/raw'
+
+def get_output_path():
+    """Retourne le chemin de sortie (local ou Kaggle)"""
+    if os.path.exists('/kaggle/working'):
+        output_path = Path('/kaggle/working/datasets/processed')
+        logger.info(f"📁 Output path (Kaggle): {output_path}")
+        return str(output_path)
+    return 'datasets/processed'
+
+def detect_kaggle_structure(input_dir: str) -> Tuple[bool, Optional[Path], Optional[Path]]:
+    """
+    Détecte si le dataset a la structure Kaggle avec_mask/without_mask
+    Returns: (is_kaggle_structure, without_mask_path, with_mask_path)
+    """
+    input_path = Path(input_dir)
+    without_mask = input_path / "without_mask"
+    with_mask = input_path / "with_mask"
+    
+    if without_mask.exists() and with_mask.exists():
+        logger.info("✅ Kaggle structure detected: with_mask/ and without_mask/")
+        return True, without_mask, with_mask
+    return False, None, None
 
 # ─────────────────────────────────────────────
 # Face Detection
@@ -187,6 +213,7 @@ class PreprocessingPipeline:
         mask_types: List[str] = None,
         scale_factors: List[int] = None,
         target_size: Tuple[int, int] = (256, 256),
+        use_real_masks: bool = False,
     ):
         self.detector = FaceDetector(backend=detector_backend)
         self.aligner = FaceAligner(target_size=target_size)
@@ -194,6 +221,7 @@ class PreprocessingPipeline:
         self.scale_factors = scale_factors or [2, 4, 8]
         self.mask_types = mask_types or MaskGenerator.MASK_TYPES
         self.target_size = target_size
+        self.use_real_masks = use_real_masks
 
     def process_image(self, image_path: Path, output_dir: Path):
         image = cv2.imread(str(image_path))
@@ -232,12 +260,24 @@ class PreprocessingPipeline:
     def run(self, input_dir: str, output_dir: str):
         input_path = Path(input_dir)
         output_path = Path(output_dir)
-        images = list(input_path.glob("**/*.jpg")) + list(input_path.glob("**/*.png"))
+        
+        # Détecte la structure Kaggle
+        is_kaggle, without_mask_dir, with_mask_dir = detect_kaggle_structure(input_dir)
+        
+        if is_kaggle:
+            # Utilise les images de without_mask/ comme source principale
+            logger.info(f"📂 Processing images from: {without_mask_dir}")
+            images = list(without_mask_dir.glob("*.jpg")) + list(without_mask_dir.glob("*.png"))
+            images += list(without_mask_dir.glob("**/*.jpg")) + list(without_mask_dir.glob("**/*.png"))
+            images = list(set(images))  # Remove duplicates
+        else:
+            # Traite tous les fichiers image du dossier
+            images = list(input_path.glob("**/*.jpg")) + list(input_path.glob("**/*.png"))
 
-        logger.info(f"Processing {len(images)} images...")
+        logger.info(f"🔄 Processing {len(images)} images...")
         for img_path in tqdm(images):
             self.process_image(img_path, output_path)
-        logger.info("Preprocessing complete.")
+        logger.info(f"✅ Preprocessing complete. Output: {output_path}")
 
 
 # ─────────────────────────────────────────────
@@ -246,19 +286,29 @@ class PreprocessingPipeline:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Face Preprocessing Pipeline")
-    parser.add_argument("--input", type=str, required=True)
-    parser.add_argument("--output", type=str, required=True)
+    parser.add_argument("--input", type=str, default=None, help="Input directory (default: auto-detect Kaggle)")
+    parser.add_argument("--output", type=str, default=None, help="Output directory (default: auto-detect Kaggle)")
     parser.add_argument("--detector", type=str, default="mtcnn",
                         choices=["mtcnn", "retinaface", "mediapipe"])
     parser.add_argument("--scales", nargs="+", type=int, default=[2, 4, 8])
     parser.add_argument("--masks", nargs="+", default=MaskGenerator.MASK_TYPES)
     parser.add_argument("--size", type=int, default=256)
+    parser.add_argument("--use-real-masks", action="store_true", 
+                        help="Use real masks from with_mask/ instead of synthetic")
     args = parser.parse_args()
+
+    # Auto-detect paths if not provided
+    input_dir = args.input or get_dataset_path()
+    output_dir = args.output or get_output_path()
+
+    logger.info(f"📥 Input:  {input_dir}")
+    logger.info(f"📤 Output: {output_dir}")
 
     pipeline = PreprocessingPipeline(
         detector_backend=args.detector,
         mask_types=args.masks,
         scale_factors=args.scales,
         target_size=(args.size, args.size),
+        use_real_masks=args.use_real_masks,
     )
-    pipeline.run(args.input, args.output)
+    pipeline.run(input_dir, output_dir)
