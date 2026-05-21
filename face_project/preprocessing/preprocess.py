@@ -18,10 +18,18 @@ logger = logging.getLogger(__name__)
 def get_dataset_path():
     """Détecte si on est sur Kaggle et retourne le bon chemin"""
     if os.path.exists('/kaggle/input'):
-        kaggle_path = Path('/kaggle/input/prasoonkottarathil/face-mask-lite-dataset')
+        # Essaie le chemin avec /datasets/
+        kaggle_path = Path('/kaggle/input/datasets/prasoonkottarathil/face-mask-lite-dataset')
         if kaggle_path.exists():
-            logger.info(f"🎯 Kaggle dataset detected: {kaggle_path}")
+            logger.info(f"🎯 Kaggle dataset detected (with /datasets/): {kaggle_path}")
             return str(kaggle_path)
+        
+        # Fallback: essaie sans /datasets/
+        kaggle_path_alt = Path('/kaggle/input/prasoonkottarathil/face-mask-lite-dataset')
+        if kaggle_path_alt.exists():
+            logger.info(f"🎯 Kaggle dataset detected (without /datasets/): {kaggle_path_alt}")
+            return str(kaggle_path_alt)
+    
     return 'datasets/raw'
 
 def get_output_path():
