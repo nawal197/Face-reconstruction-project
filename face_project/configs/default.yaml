@@ -1,0 +1,23 @@
+data:
+  processed_dir: datasets/processed
+  scale_factor: 4
+  mask_type: surgical
+  image_size: 256
+
+training:
+  epochs: 100
+  batch_size: 8
+  lr_g: 0.0002
+  lr_d: 0.0002
+  lr: 0.0002
+  lambda_l1: 100.0
+  lambda_arcface: 1.0
+  lambda_perceptual: 1.0
+
+model:
+  features_g: 64
+
+logging:
+  tensorboard_dir: results/tensorboard
+  checkpoint_dir: models/checkpoints
+  wandb_project: face-unmasking
