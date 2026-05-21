@@ -18,17 +18,11 @@ logger = logging.getLogger(__name__)
 def get_dataset_path():
     """Détecte si on est sur Kaggle et retourne le bon chemin"""
     if os.path.exists('/kaggle/input'):
-        # Essaie le chemin avec /datasets/
-        kaggle_path = Path('/kaggle/input/datasets/prasoonkottarathil/face-mask-lite-dataset')
+        # FFHQ Dataset (Flickr Faces HQ)
+        kaggle_path = Path('/kaggle/input/datasets/arnaud58/flickrfaceshq-dataset-ffhq')
         if kaggle_path.exists():
-            logger.info(f"🎯 Kaggle dataset detected (with /datasets/): {kaggle_path}")
+            logger.info(f"🎯 Kaggle FFHQ dataset detected: {kaggle_path}")
             return str(kaggle_path)
-        
-        # Fallback: essaie sans /datasets/
-        kaggle_path_alt = Path('/kaggle/input/prasoonkottarathil/face-mask-lite-dataset')
-        if kaggle_path_alt.exists():
-            logger.info(f"🎯 Kaggle dataset detected (without /datasets/): {kaggle_path_alt}")
-            return str(kaggle_path_alt)
     
     return 'datasets/raw'
 
@@ -42,16 +36,21 @@ def get_output_path():
 
 def detect_kaggle_structure(input_dir: str) -> Tuple[bool, Optional[Path], Optional[Path]]:
     """
-    Détecte si le dataset a la structure Kaggle avec_mask/without_mask
-    Returns: (is_kaggle_structure, without_mask_path, with_mask_path)
+    Détecte la structure du dataset
+    - Si /with_mask/ et /without_mask/ existent (Face Mask Lite Dataset)
+    - Sinon traite directement les images (FFHQ, CelebA, etc.)
+    Returns: (is_masked_structure, without_mask_path, with_mask_path)
     """
     input_path = Path(input_dir)
     without_mask = input_path / "without_mask"
     with_mask = input_path / "with_mask"
     
+    # Vérifie si c'est la structure avec_mask/without_mask
     if without_mask.exists() and with_mask.exists():
-        logger.info("✅ Kaggle structure detected: with_mask/ and without_mask/")
+        logger.info("✅ Masked dataset structure detected: with_mask/ and without_mask/")
         return True, without_mask, with_mask
+    
+    logger.info("✅ Generic dataset structure (FFHQ, CelebA, etc.)")
     return False, None, None
 
 # ─────────────────────────────────────────────
