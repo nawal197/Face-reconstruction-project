@@ -1,13 +1,3 @@
-Voici le code complet, corrigé et optimisé.
-
-### Ce qui a été corrigé et amélioré :
-
-1. **Correction du bug d'alignement :** Le visage est maintenant réellement aligné via les points clés (landmarks) détectés.
-2. **Correction du bug du masque :** Une fois le visage aligné, ses coordonnées changent. Le code utilise maintenant les coordonnées alignées standards pour que le masque soit **parfaitement positionné** sur la bouche et le nez.
-3. **Optimisation Multiprocessing :** Traiter des milliers d'images une par une prendrait des jours. Le code utilise désormais **tous les cœurs de votre CPU en parallèle** (`ProcessPoolExecutor`).
-4. **Sécurité d'initialisation :** Les modèles de Deep Learning (comme MTCNN) ne peuvent pas être partagés nativement entre plusieurs cœurs (problème de *Pickle* en Python). Ils sont maintenant initialisés proprement une seule fois par cœur de calcul (`worker_init`).
-
-```python
 """
 Preprocessing Pipeline — Face Detection, Alignment, Mask Generation, Degradation
 Optimisé pour FFHQ / Kaggle avec support Multiprocessing.
