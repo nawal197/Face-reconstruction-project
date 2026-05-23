@@ -1,8 +1,11 @@
 data:
-  raw_dir: datasets/raw                    # Local
-  processed_dir: datasets/processed        # Local
+  raw_dir: datasets/raw
+  processed_dir: datasets/processed    # ← Sortie du preprocessing
+  split: train                          # ← NEW: train / val / test
   scale_factor: 4
+  scale_factors: [2, 4, 8]             # ← NEW: all scales
   mask_type: surgical
+  mask_types: [surgical, fabric, n95, black, white, colored]  # ← NEW
   image_size: 256
 
 training:
@@ -10,7 +13,6 @@ training:
   batch_size: 8
   lr_g: 0.0002
   lr_d: 0.0002
-  lr: 0.0002
   lambda_l1: 100.0
   lambda_arcface: 1.0
   lambda_perceptual: 1.0

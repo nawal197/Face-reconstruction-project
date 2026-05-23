@@ -1,9 +1,11 @@
 data:
-  # Chemins Kaggle
-  raw_dir: /kaggle/input/prasoonkottarathil/face-mask-lite-dataset
-  processed_dir: /kaggle/working/datasets/processed
+  raw_dir: /kaggle/input/datasets/arnaud58/flickrfaceshq-dataset-ffhq  # FFHQ source
+  processed_dir: /kaggle/working/face_dataset  # ← Sortie du preprocessing
+  split: train
   scale_factor: 4
+  scale_factors: [2, 4, 8]
   mask_type: surgical
+  mask_types: [surgical, fabric, n95, black, white, colored]
   image_size: 256
 
 training:
